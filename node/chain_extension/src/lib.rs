@@ -65,6 +65,18 @@ impl<Runtime> ChainExtension<Runtime> for NftmartExtension<Runtime> where
 
 			2002 => {
 				let mut env = env.buf_in_buf_out();
+				// let caller = env.ext().caller().clone();
+				// let caller: <Runtime as SysConfig>::AccountId = to_account_id(caller.as_ref())?;
+				let (creator, metadata, name, description, properties): (_, _, _, _, u8) = env.read_as_unbounded(env.in_len())?;
+				let p = Properties(<BitFlags<ClassProperty>>::from_bits(properties).map_err(|_| "invalid class properties value")?);
+				let (owner, class_id) = nftmart_nft::Pallet::<Runtime>::do_create_class(&creator, metadata, name, description, p).map_err(|e| e.error)?;
+				let r = (owner, class_id).encode();
+				env.write(&r, false, None)
+					.map_err(|_| DispatchError::Other("ChainExtension failed to return result from do_create_class"))?;
+			}
+
+			2012 => {
+				let mut env = env.buf_in_buf_out();
 				let caller = env.ext().caller().clone();
 				let caller: <Runtime as SysConfig>::AccountId = to_account_id(caller.as_ref())?;
 				let (metadata, name, description, properties): (_, _, _, u8) = env.read_as_unbounded(env.in_len())?;
@@ -75,7 +87,43 @@ impl<Runtime> ChainExtension<Runtime> for NftmartExtension<Runtime> where
 					.map_err(|_| DispatchError::Other("ChainExtension failed to return result from do_create_class"))?;
 			}
 
+			2022 => {
+				let mut env = env.buf_in_buf_out();
+				let contract = env.ext().address().clone();
+				let contract = to_account_id(contract.as_ref());
+				let (metadata, name, description, properties): (_, _, _, u8) = env.read_as_unbounded(env.in_len())?;
+				let p = Properties(<BitFlags<ClassProperty>>::from_bits(properties).map_err(|_| "invalid class properties value")?);
+				let (owner, class_id) = nftmart_nft::Pallet::<Runtime>::do_create_class(&contract, metadata, name, description, p).map_err(|e| e.error)?;
+				let r = (owner, class_id).encode();
+				env.write(&r, false, None)
+					.map_err(|_| DispatchError::Other("ChainExtension failed to return result from do_create_class"))?;
+			}
+
 			2003 => {
+				let mut env = env.buf_in_buf_out();
+				// let caller = env.ext().caller().clone();
+				// let caller = to_account_id(caller.as_ref())?;
+				let (creator, to, class_id, metadata, quantity, charge_royalty) = env.read_as_unbounded(env.in_len())?;
+				let (class_owner, beneficiary, class_id, token_id, quantity) =
+					nftmart_nft::Pallet::<Runtime>::do_proxy_mint(&creator, &to, class_id, metadata, quantity, charge_royalty).map_err(|e| e.error)?;
+				let r = (class_owner, beneficiary, class_id, token_id, quantity).encode();
+				env.write(&r, false, None)
+					.map_err(|_| DispatchError::Other("ChainExtension failed to return result from do_proxy_mint"))?;
+			}
+
+			2013 => {
+				let mut env = env.buf_in_buf_out();
+				let contract = env.ext().caller().clone();
+				let contract = to_account_id(caller.as_ref())?;
+				let (to, class_id, metadata, quantity, charge_royalty) = env.read_as_unbounded(env.in_len())?;
+				let (class_owner, beneficiary, class_id, token_id, quantity) =
+					nftmart_nft::Pallet::<Runtime>::do_proxy_mint(&contract, &to, class_id, metadata, quantity, charge_royalty).map_err(|e| e.error)?;
+				let r = (class_owner, beneficiary, class_id, token_id, quantity).encode();
+				env.write(&r, false, None)
+					.map_err(|_| DispatchError::Other("ChainExtension failed to return result from do_proxy_mint"))?;
+			}
+
+			2023 => {
 				let mut env = env.buf_in_buf_out();
 				let caller = env.ext().caller().clone();
 				let caller = to_account_id(caller.as_ref())?;

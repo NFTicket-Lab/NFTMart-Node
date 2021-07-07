@@ -228,7 +228,8 @@ impl<T: Config> NftmartConfig<T::AccountId, BlockNumberFor<T>> for Pallet<T> {
 	}
 
 	fn is_in_whitelist(who: &T::AccountId) -> bool {
-		Self::account_whitelist(who).is_some()
+		true
+		// Self::account_whitelist(who).is_some()
 	}
 
 	fn get_min_order_deposit() -> Balance {
