@@ -72,7 +72,7 @@ pub use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment, Currency
 use pallet_session::{historical as pallet_session_historical};
 use sp_inherents::{InherentData, CheckInherentsResult};
 use static_assertions::const_assert;
-use pallet_contracts::weights::WeightInfo;
+use pallet_contracts::{Limits, weights::WeightInfo};
 use pallet_election_provider_multi_phase::FallbackStrategy;
 
 #[cfg(any(feature = "std", test))]
@@ -794,7 +794,13 @@ parameter_types! {
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
 			<Runtime as pallet_contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
 		)) / 5) as u32;
-	pub Schedule: pallet_contracts::Schedule<Runtime> = Default::default();
+		pub Schedule: pallet_contracts::Schedule<Runtime> = pallet_contracts::Schedule{
+			limits:Limits{
+				code_len:1000000*1024,
+				.. Default::default()
+			},
+			.. Default::default()
+		};
 }
 
 impl pallet_contracts::Config for Runtime {
